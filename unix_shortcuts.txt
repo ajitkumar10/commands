@@ -1,0 +1,27 @@
+
+## below commands can be added to .bashrc or .bash_profile in your unix home directory
+
+# increase history size. this determines how many commands are stored in history before it rolls over.
+HISTFILESIZE=5000
+
+# define alias command to reference commonly used commands
+alias mysrc='cd /dev/org/app/trunk/src/'
+
+## below commands can be used to type a new command or edit a previously executed command
+
+# up-down arrow - move between previously types commands
+# Ctrl-A - beginning of command
+# Ctrl-E - end of command
+# Ctrl-Left Arrow - previous argument in command line
+# Ctrl-Right Arrow - next argument in command line
+# Ctrl-U - clear the command
+# Ctrl-K - clear the command after the cursor
+# Ctrl-W - deletes the word before the cursor
+# Ctrl-R - search the previously executed commands
+# Tab - Autocomplete directory/files
+
+
+
+
+
+
