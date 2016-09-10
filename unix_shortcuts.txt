@@ -20,7 +20,21 @@ alias mysrc='cd /dev/org/app/trunk/src/'
 # Ctrl-R - search the previously executed commands
 # Tab - Autocomplete directory/files
 
+# switch to last working director
+cd -
 
+# run the last executed command
+!!
+
+# run the last ls command
+!ls
+
+# do not run, only print the last ls command
+!ls:p
+
+# use arguments from last command
+ls -l abc.txt
+cat !$
 
 
 
