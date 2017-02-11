@@ -19,6 +19,7 @@ alias mysrc='cd /dev/org/app/trunk/src/'
 # Ctrl-W - deletes the word before the cursor
 # Ctrl-R - search the previously executed commands
 # Tab - Autocomplete directory/files
+test
 
 # switch to last working director
 cd -
