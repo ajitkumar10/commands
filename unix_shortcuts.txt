@@ -36,6 +36,26 @@ cd -
 ls -l abc.txt
 cat !$
 
+# find all files greater than 100 MB not modified in last 60 days and delete them
+find ./path_to_search/ -type f -size +100M -mtime -60 -exec ls -l {} \;
+
+# find all files in path of given pattern and replace a given text
+find ./path_to_search/ -type f -name "*sh" -exec sed -i "s/oldservername/newservername/g" {} \;
+
+# suppress standard output
+cat sample.txt > /dev/null
+
+# suppress error output
+cat sample.txt 2> /dev/null
+
+# suppress standard output and then redirect error output to standard output
+cat sample.txt > /dev/null 2>&1
+
+# when argument list is too large us xargs
+find . -name "*.tar.gz" -print0 | xargs -0 ls -l
+
+# feed a command to for loop that outputs in multiple line using space as delimiter
+for i in $(stat -s filename.txt); do echo $i; done;
 
 
 
