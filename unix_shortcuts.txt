@@ -58,5 +58,163 @@ find . -name "*.tar.gz" -print0 | xargs -0 ls -l
 # feed a command to for loop that outputs in multiple line using space as delimiter
 for i in $(stat -s filename.txt); do echo $i; done;
 
+# find files of given pattern containing a given text in current dir and its sub directories
+### grep -n prints line number
+find . -type f -name "*filenamepattern*" | xargs grep -n "searchtext" 
+
+## do above in only current directory
+for f in *filenamepattern*; do grep -n "searchtext" "$f"; done;
+
+find . -type f -maxdepth 1 -name "*filenamepattern*" | xargs grep -n "searchtext" 
+
+# On Solaris, grep -H does not print file name containing the text
+# use below instead grep -l prints file name 
+find . -type f -name "*filenamepattern*" -exec grep -l "searchtext" {} \;
+
+########################################################
+##############   MAIL  #################################
+########################################################
+
+# mail a file as attachment
+mpack -s "<subject>" <attachment_filepath> ToEmail@email.com
+
+# mail one file as attachment and use another file as email body
+mpack -s "<subject>" -d <body_filepath> <attachment_filepath> ToEmail@email.com
+
+# mail file content as body
+cat <body_filepath> | mailx -s "<subject>" ToEmail@email.com
+
+# mail file content as body to multiple people
+cat <body_filepath> | mailx -s "<subject>" ToEmail@email.com,ToEmail2@email.com
+
+
+######## IO Redirection ########
+
+# Option 1: from cron or command line
+/user/home/scripts/test_script.sh > /user/home/log/script_log.log 2>&1
+
+# Option 2: from within the script
+/user/home/scripts/test_script.sh
+exec 1>/user/home/log/script_log.log
+exec 2>&1
+
+## Reference: 
+1)http://unix.stackexchange.com/questions/20469/difference-between-21-output-log-and-21-tee-output-log/20471
+2)http://stackoverflow.com/questions/818255/in-the-shell-what-does-21-mean
+
+## print all file names of a given pattern in current dir
+ls -l <filenamepattern*>
+for f in <filenamepattern*>; do echo $f; done;
+
+## split a file delimiter, extract 3rd column, delete leading spaces, 
+###sort, get unique entries and count of unique entries
+awk -F"|" '{print $3;}' file.txt | sed 's/[\t]*/d;/^[ ]*/d' | sort -u | wc -l
+
+## split by delimiter and print the line if a condition is met e.g. 4th col = 0
+awk -F"," '($4 == 0) {print $0'}' file.txt
+
+## check if a field matches pattern and then print length of field
+### e.g. check oracle object name 
+awk -F"," '($4 ~ /searchtext/) {print length($4),$4;}' file.txt
+
+## extract select columns e.g. 12,23,25 based on condition  e.g. 4th col > 0
+### and then print specified header line and then column data for those select columns
+awk -F"|" 'BEGIN {print "COLHDR_1|COLHDR_2|COLHDR_3"} ($4 >0) {print $12,$23,$25;}' file.txt
+
+## extract select columns e.g. 12,23,25 
+awk -F"|" '{print $12,$23,$25;}' file.txt
+cut -d"|" -f12,23,25 file.txt
+
+
+## extract columns based on multiple conditions
+awk -F"|" '(($4 > 0 || $17 < 0) && ($21 > 200)) {print $12,$23,$25;}' file.txt
+
+## find length of line
+awk '{print NR,length($0);}' file.txt
+
+## copy files in current dir(and sub dir) that are less than 1 day old 
+### to another dir
+find . -type f -mtime -1 | xargs -i cp -p {} bak_dir/
+find . -type f -mtime -1 -exec cp -p {} bak_dir/  \;
+
+
+## find files larger than a given size
+find . -type f -size +100M -exec ls -lh {} \;
+
+## find files larger than a given size ordered by size
+find . -type f -size +100M | xargs du -h | sort -rn
+find . -type f -size +100M | xargs du -skh | sort -rn
+
+## get date for previous month
+### say today is 10-Dec-16
+date +%Y%m -d 'last month'
+201611
+date +%Y%m -d 'now'
+201612
+date +%Y%m -d 'next month'
+201701
+
+
+## get year for previous month
+date +%Y -d 'last month'
+2016
+
+## given a date , extract seconds
+a=`date`; date +%S -d $a
+
+## get first 5 characters of text from line
+cut -b1-5 file.txt
+awk '{print substr($0, 1,5);}' file.txt
+
+
+## search and replace text in a file in-place
+sed -i 's/searchtext/g' file.txt
+
+## find and remove file using inode number
+### e.g. esp useful when file name has special chars
+find . -inum <inode_number> -exec ls -l {} \;
+## to find the inode number , use ls -li 
+## to remove file, replace ls -l with rm but BE CAREFUL before deleting anything. Ensure you are deleting the file you want to delete.
+
+## Given a file path , extract file name and dir name
+full_path=/user/home/log/script_log.log
+file=$(basename $full_path)
+dir=$(dirname $full_path)
+
+## To delete text to left or right of cursor in VI
+x -> delete text to left of cursor
+X -> delete text to right of cursor
+
+###############################################
+################## SCP ########################
+###############################################
+
+-- copy from remote machine to local machine
+scp user@server:<remote_dir_path>/<remote_file_name> .
+
+-- copy from local machine to remote machine
+scp <local_file_path> user@server:<remote_dir_path>/<remote_file_name>
+
+
+###############################################
+################## TAR ########################
+###############################################
+
+## create a tar file that comprises of file1 and file2
+tar cvf <tar_file_name.tar> file1 file2
+
+## create a compresses tar archive
+tar cvzf <tar_file_name.tar.gz> file1 file2
+
+## list contents of tar file
+tar tvf <tar_file_name.tar>
+tar tvzf <tar_file_name.tar.gz>
+
+## extract all files from tar
+tar -xvf <tar_file_name.tar>
+
+## decompress a zip archive file
+gzip -d <gunzip compressed file>
+
 
 
