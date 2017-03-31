@@ -45,3 +45,15 @@ sys.path
 // when done
 deactivate 
 
+
+To install a package: pip install MyProject
+To update a package pip install --upgrade MyProject
+To fix a version of a package pip install MyProject==1.0
+To install the package manager:
+
+curl -O http://python-distribute.org/distribute_setup.py
+python distribute_setup.py
+easy_install pip
+References:
+http://guide.python-distribute.org/
+http://pypi.python.org/pypi/distribute
