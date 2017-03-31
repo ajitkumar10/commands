@@ -26,3 +26,22 @@ sys.argv[0]
 // Or
 os.path.basename(__file__)
 
+// delete and/or reload an imported module
+import sys
+from imp import reload
+import django
+// reload needs module object and not string
+reload(sys.modules['django'])
+del django
+// btw - django itself uses reload to mitigate need for restarting server
+
+// how to use virtual env
+source {venv_path}/bin/activate
+// this includes the modules in venv_path e.g.
+import sys
+sys.path
+// now use python like before e.g. #!/usr/bin/python
+{call scripts here for this venv}
+// when done
+deactivate 
+
