@@ -222,4 +222,9 @@ gzip -d <gunzip compressed file>
 find . -type f -name "*.jpg" -size +2M -exec ls -l {} \; > ~/Desktop/large_file.txt
 
 -- step 2 : sort the data from 1 by 5th column (numerical sort) where 5th column is size, then use awk to print records with duplicate size
-cat large_file.txt | sort -t" " -k 5,5n | awk -F" " '$5 in seen{print seen[$5]; print} {seen[$5]=$0}'
+cat large_file.txt | sort -t" " -k 5,5n | awk -F" " '$5 in seen{print seen[$5]; print} {seen[$5]=$0}' > large_file_duplicates.txt
+
+-- step 3: sum up the 5th "size" column in bytes, then calculate the potential size that can be freed in GB as 
+-- sum (in bytes) / (2 * 1024^3)
+-- /2 is based on assumption that there are 2 duplicates and one of them needs to be retained.
+awk 'NR > 5 { sum += $5 } END { print sum; }' large_file_duplicates.txt
