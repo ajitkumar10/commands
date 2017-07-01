@@ -217,4 +217,9 @@ tar -xvf <tar_file_name.tar>
 gzip -d <gunzip compressed file>
 
 
+-- find duplicate files by size
+-- step 1 : data gathering : for the given directory (incl sub dirs), find all files of type jpg larger than 2MB and write to file
+find . -type f -name "*.jpg" -size +2M -exec ls -l {} \; > ~/Desktop/large_file.txt
 
+-- step 2 : sort the data from 1 by 5th column (numerical sort) where 5th column is size, then use awk to print records with duplicate size
+cat large_file.txt | sort -t" " -k 5,5n | awk -F" " '$5 in seen{print seen[$5]; print} {seen[$5]=$0}'
