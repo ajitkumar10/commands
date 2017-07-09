@@ -45,6 +45,9 @@ sys.path
 // when done
 deactivate 
 
+To install a package using pip from console:
+  import pip
+  pip.main(['install', 'xlsxwriter'])
 
 To install a package: pip install MyProject
 To update a package pip install --upgrade MyProject
