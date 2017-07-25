@@ -37,33 +37,28 @@ cd -
 ls -l abc.txt
 cat !$
 
+# feed a command to for loop that outputs in multiple line using space as delimiter
+for i in $(stat -s filename.txt); do echo $i; done;
+
+## do above in only current directory
+for f in *filenamepattern*; do grep -n "searchtext" "$f"; done;
+
+#######################################################################################################
+imporant find commands
+#######################################################################################################
+# when argument list is too large us xargs
+find . -name "*.tar.gz" -print0 | xargs -0 ls -l
+
+# find files of given pattern containing a given text in current dir and its sub directories
+### grep -n prints line number
+find . -type f -name "*filenamepattern*" | xargs grep -n "searchtext" 
+
 # find all files greater than 100 MB not modified in last 60 days and delete them
 find ./path_to_search/ -type f -size +100M -mtime -60 -exec ls -l {} \;
 
 # find all files in path of given pattern and replace a given text
 find ./path_to_search/ -type f -name "*sh" -exec sed -i "s/oldservername/newservername/g" {} \;
 
-# suppress standard output
-cat sample.txt > /dev/null
-
-# suppress error output
-cat sample.txt 2> /dev/null
-
-# suppress standard output and then redirect error output to standard output
-cat sample.txt > /dev/null 2>&1
-
-# when argument list is too large us xargs
-find . -name "*.tar.gz" -print0 | xargs -0 ls -l
-
-# feed a command to for loop that outputs in multiple line using space as delimiter
-for i in $(stat -s filename.txt); do echo $i; done;
-
-# find files of given pattern containing a given text in current dir and its sub directories
-### grep -n prints line number
-find . -type f -name "*filenamepattern*" | xargs grep -n "searchtext" 
-
-## do above in only current directory
-for f in *filenamepattern*; do grep -n "searchtext" "$f"; done;
 
 find . -type f -maxdepth 1 -name "*filenamepattern*" | xargs grep -n "searchtext" 
 
@@ -71,9 +66,42 @@ find . -type f -maxdepth 1 -name "*filenamepattern*" | xargs grep -n "searchtext
 # use below instead grep -l prints file name 
 find . -type f -name "*filenamepattern*" -exec grep -l "searchtext" {} \;
 
-########################################################
-##############   MAIL  #################################
-########################################################
+## copy files in current dir(and sub dir) that are less than 1 day old 
+### to another dir
+find . -type f -mtime -1 | xargs -i cp -p {} bak_dir/
+find . -type f -mtime -1 -exec cp -p {} bak_dir/  \;
+
+
+## find files larger than a given size
+find . -type f -size +100M -exec ls -lh {} \;
+
+## find files larger than a given size ordered by size
+find . -type f -size +100M | xargs du -h | sort -rn
+find . -type f -size +100M | xargs du -skh | sort -rn
+
+## find and remove file using inode number
+### e.g. esp useful when file name has special chars
+find . -inum <inode_number> -exec ls -l {} \;
+## to find the inode number , use ls -li 
+## to remove file, replace ls -l with rm but BE CAREFUL before deleting anything. Ensure you are deleting the file you want to delete.
+
+
+
+-- find duplicate files by size
+-- step 1 : data gathering : for the given directory (incl sub dirs), find all files of type jpg larger than 2MB and write to file
+find . -type f -name "*.jpg" -size +2M -exec ls -l {} \; > ~/Desktop/large_file.txt
+
+-- step 2 : sort the data from 1 by 5th column (numerical sort) where 5th column is size, then use awk to print records with duplicate size
+cat large_file.txt | sort -t" " -k 5,5n | awk -F" " '$5 in seen{print seen[$5]; print} {seen[$5]=$0}' > large_file_duplicates.txt
+
+-- step 3: sum up the 5th "size" column in bytes, then calculate the potential size that can be freed in GB as 
+-- sum (in bytes) / (2 * 1024^3)
+-- /2 is based on assumption that there are 2 duplicates and one of them needs to be retained.
+awk 'NR > 5 { sum += $5 } END { print sum; }' large_file_duplicates.txt
+
+#######################################################################################################
+mail commands
+#######################################################################################################
 
 # mail a file as attachment
 mpack -s "<subject>" <attachment_filepath> ToEmail@email.com
@@ -88,7 +116,18 @@ cat <body_filepath> | mailx -s "<subject>" ToEmail@email.com
 cat <body_filepath> | mailx -s "<subject>" ToEmail@email.com,ToEmail2@email.com
 
 
-######## IO Redirection ########
+#######################################################################################################
+IO redirection
+#######################################################################################################
+
+# suppress standard output
+cat sample.txt > /dev/null
+
+# suppress error output
+cat sample.txt 2> /dev/null
+
+# suppress standard output and then redirect error output to standard output
+cat sample.txt > /dev/null 2>&1
 
 # Option 1: from cron or command line
 /user/home/scripts/test_script.sh > /user/home/log/script_log.log 2>&1
@@ -102,9 +141,17 @@ exec 2>&1
 1)http://unix.stackexchange.com/questions/20469/difference-between-21-output-log-and-21-tee-output-log/20471
 2)http://stackoverflow.com/questions/818255/in-the-shell-what-does-21-mean
 
+#######################################################################################################
+for loop examples
+#######################################################################################################
+
 ## print all file names of a given pattern in current dir
 ls -l <filenamepattern*>
 for f in <filenamepattern*>; do echo $f; done;
+
+#######################################################################################################
+awk commands
+#######################################################################################################
 
 ## split a file delimiter, extract 3rd column, delete leading spaces, 
 ###sort, get unique entries and count of unique entries
@@ -132,18 +179,17 @@ awk -F"|" '(($4 > 0 || $17 < 0) && ($21 > 200)) {print $12,$23,$25;}' file.txt
 ## find length of line
 awk '{print NR,length($0);}' file.txt
 
-## copy files in current dir(and sub dir) that are less than 1 day old 
-### to another dir
-find . -type f -mtime -1 | xargs -i cp -p {} bak_dir/
-find . -type f -mtime -1 -exec cp -p {} bak_dir/  \;
+## get first 5 characters of text from line
+cut -b1-5 file.txt
+awk '{print substr($0, 1,5);}' file.txt
 
+## print specified lines and perform sed to replace
+awk '{if (NR==12 || NR==72) print $0;}' file.txt | sed 's/@@/%%/g'
 
-## find files larger than a given size
-find . -type f -size +100M -exec ls -lh {} \;
+#######################################################################################################
+date commands
+#######################################################################################################
 
-## find files larger than a given size ordered by size
-find . -type f -size +100M | xargs du -h | sort -rn
-find . -type f -size +100M | xargs du -skh | sort -rn
 
 ## get date for previous month
 ### say today is 10-Dec-16
@@ -162,19 +208,6 @@ date +%Y -d 'last month'
 ## given a date , extract seconds
 a=`date`; date +%S -d $a
 
-## get first 5 characters of text from line
-cut -b1-5 file.txt
-awk '{print substr($0, 1,5);}' file.txt
-
-
-## search and replace text in a file in-place
-sed -i 's/searchtext/g' file.txt
-
-## find and remove file using inode number
-### e.g. esp useful when file name has special chars
-find . -inum <inode_number> -exec ls -l {} \;
-## to find the inode number , use ls -li 
-## to remove file, replace ls -l with rm but BE CAREFUL before deleting anything. Ensure you are deleting the file you want to delete.
 
 ## Given a file path , extract file name and dir name
 full_path=/user/home/log/script_log.log
@@ -185,9 +218,17 @@ dir=$(dirname $full_path)
 x -> delete text to left of cursor
 X -> delete text to right of cursor
 
-###############################################
-################## SCP ########################
-###############################################
+#######################################################################################################
+sed commands
+#######################################################################################################
+
+## search and replace text in a file in-place
+sed -i 's/searchtext/g' file.txt
+
+#######################################################################################################
+scp commands
+#######################################################################################################
+
 
 -- copy from remote machine to local machine
 scp user@server:<remote_dir_path>/<remote_file_name> .
@@ -196,9 +237,11 @@ scp user@server:<remote_dir_path>/<remote_file_name> .
 scp <local_file_path> user@server:<remote_dir_path>/<remote_file_name>
 
 
-###############################################
-################## TAR ########################
-###############################################
+#######################################################################################################
+tar commands
+#######################################################################################################
+
+
 
 ## create a tar file that comprises of file1 and file2
 tar cvf <tar_file_name.tar> file1 file2
@@ -217,14 +260,18 @@ tar -xvf <tar_file_name.tar>
 gzip -d <gunzip compressed file>
 
 
--- find duplicate files by size
--- step 1 : data gathering : for the given directory (incl sub dirs), find all files of type jpg larger than 2MB and write to file
-find . -type f -name "*.jpg" -size +2M -exec ls -l {} \; > ~/Desktop/large_file.txt
 
--- step 2 : sort the data from 1 by 5th column (numerical sort) where 5th column is size, then use awk to print records with duplicate size
-cat large_file.txt | sort -t" " -k 5,5n | awk -F" " '$5 in seen{print seen[$5]; print} {seen[$5]=$0}' > large_file_duplicates.txt
+#######################################################################################################
+-- grep for multiple strings
 
--- step 3: sum up the 5th "size" column in bytes, then calculate the potential size that can be freed in GB as 
--- sum (in bytes) / (2 * 1024^3)
--- /2 is based on assumption that there are 2 duplicates and one of them needs to be retained.
-awk 'NR > 5 { sum += $5 } END { print sum; }' large_file_duplicates.txt
+-- Case 1: OR condition - check for lines where any of the search string is present
+grep "str1\|str2" file_to_search
+OR
+echo "str1" > text_to_search.txt;
+echo "str2" > text_to_search.txt;
+grep -f text_to_search.txt file_to_search
+
+-- Case 2: AND condition - check for lines where all of the search strings are present in specified order
+grep "str1.*str2" file_to_search
+#######################################################################################################
+
