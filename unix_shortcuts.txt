@@ -58,9 +58,11 @@ find ./path_to_search/ -type f -size +100M -mtime -60 -exec ls -l {} \;
 
 # find all files in path of given pattern and replace a given text
 find ./path_to_search/ -type f -name "*sh" -exec sed -i "s/oldservername/newservername/g" {} \;
-
+## On Solaris or certain installation sed -i option is not available, then may use perl
+find ./path_to_search/ -type f -name "*sh" -exec perl -p -i -e "s/oldservername/newservername/g" {} \;
 
 find . -type f -maxdepth 1 -name "*filenamepattern*" | xargs grep -n "searchtext" 
+
 
 # On Solaris, grep -H does not print file name containing the text
 # use below instead grep -l prints file name 
@@ -84,8 +86,6 @@ find . -type f -size +100M | xargs du -skh | sort -rn
 find . -inum <inode_number> -exec ls -l {} \;
 ## to find the inode number , use ls -li 
 ## to remove file, replace ls -l with rm but BE CAREFUL before deleting anything. Ensure you are deleting the file you want to delete.
-
-
 
 -- find duplicate files by size
 -- step 1 : data gathering : for the given directory (incl sub dirs), find all files of type jpg larger than 2MB and write to file
@@ -150,6 +150,17 @@ ls -l <filenamepattern*>
 for f in <filenamepattern*>; do echo $f; done;
 
 #######################################################################################################
+crontab commands
+#######################################################################################################
+
+## find all cron jobs that start after 4pm and are inactive
+crontab -l | awk '{if( $1 ~ /#/) && ( $2 == '16' ) ) { print $0; }'
+
+## find all cron jobs that start after 4pm and are active
+crontab -l | awk '{if( $1 !~ /#/) && ( $2 == '16' ) ) { print $0; }'
+
+
+#######################################################################################################
 awk commands
 #######################################################################################################
 
@@ -185,6 +196,12 @@ awk '{print substr($0, 1,5);}' file.txt
 
 ## print specified lines and perform sed to replace
 awk '{if (NR==12 || NR==72) print $0;}' file.txt | sed 's/@@/%%/g'
+
+## determine column number for a each field data in a pipe-delimited file
+awk -F"|" '(NR == 1) {for(i=1;i<=NF;i++) print i":"$i}' file.txt
+
+## find unique values for a column in a comma-delimited file
+awk -F"," '{print $2;}' file.csv | sort -u
 
 #######################################################################################################
 date commands
@@ -225,10 +242,32 @@ sed commands
 ## search and replace text in a file in-place
 sed -i 's/searchtext/g' file.txt
 
-#######################################################################################################
-scp commands
-#######################################################################################################
+## search and replace a text with multiple-line text in-place for a file
+sed -f replace_with_multiline_text.sed -i file.txt
+where -f option allows to specify a sed script file
+and replace_with_multiline_text.sed has below text
+s/original_line/replaced_line1\
+replaced_line2\
+replaced_line3/
 
+## find all matching files with text and use sed to replace with multi-line text
+for f in *.txt; do echo $f; sed -f replace_with_multiline_text.sed -i $f;done
+OR
+find -maxdepth 1 -type f -name "{fileprefix}*" -exec sed -f replace_with_multiline_text.sed -i {} \;
+
+## find and replace multiple texts with their replacements text in-place in one-go
+find . -type f -name "{fileprefix}*" -exec "s|/root/path1|/root|newpath1|g; s|/root/path2|/root|newpath2|g;" {} \;
+
+## BACKUP
+## find files matching a given criteria and copy to specified dir
+find . -type f -name "{prefix}*" -exec grep -l -i "{searchText}" {} \; -exec -cp {} backup_dir/ {} \;
+
+-- also preserve the same directory strucutre as in original directory structure
+find . -type f -name "{prefix}*" -exec grep -l -i "{searchText}" {} \; -exec -cp --parents {} backup_dir/ {} \;
+
+#######################################################################################################
+scp/sftp commands
+#######################################################################################################
 
 -- copy from remote machine to local machine
 scp user@server:<remote_dir_path>/<remote_file_name> .
@@ -236,6 +275,19 @@ scp user@server:<remote_dir_path>/<remote_file_name> .
 -- copy from local machine to remote machine
 scp <local_file_path> user@server:<remote_dir_path>/<remote_file_name>
 
+## to specify private key file explicitly
+sftp -oIdentityFile=~/.ssh/customFile $user@$host
+
+
+#######################################################################################################
+sort commands
+#######################################################################################################
+
+## print duplicate lines
+sort file.txt | uniq -cd
+
+## count of duplicate lines
+sort file.txt | uniq -cd | wc -l
 
 #######################################################################################################
 tar commands
@@ -273,5 +325,21 @@ grep -f text_to_search.txt file_to_search
 
 -- Case 2: AND condition - check for lines where all of the search strings are present in specified order
 grep "str1.*str2" file_to_search
+
 #######################################################################################################
+misc commands
+#######################################################################################################
+
+## prints directory and subdirectory representation (needs UTF-8 e.g. In Putty > Settings > Window > Translation > Received data assumed to be in which characterset)
+tree {dir}
+
+## extract text by position and check if non-digits
+cut -b10-15 file.txt | grep -v "^[0-9]*$"
+
+## read a file and print each line
+while read line; do echo $line; done < file.txt
+
+## copy specified files in a "file" to given directory
+while read filepath; do cp $filepath {dest_dir}; done < file_with_filepaths_to_copy.txt
+
 
